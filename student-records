@@ -1,0 +1,74 @@
+class StudentRecords:
+  counter = 0
+  students = {}
+  students_classes = {}
+  def __init__ (self, name, age, grade_level):
+    self.name = name
+    self.age = age
+    self.grade_level = grade_level
+    StudentRecords.counter += 1
+    StudentRecords.students[self.name] = [self.age,self.grade_level]
+    StudentRecords.students_classes[self.name] = []
+  def setClasses(self, name, classes):
+    if "," in classes:
+      classes_split = classes.split(",")
+      classes_stripped = []
+      for x in classes_split:
+        classes_stripped.append(x.title().strip(" "))
+      StudentRecords.students_classes[name] = classes_stripped
+    else:
+      StudentRecords.students_classes[name] = [classes]
+  def addClasses (self,name,classes):
+    if "," in classes:
+      classes_split = classes.split(",")
+      classes_strip = []
+      for x in classes_split:
+        classes_strip.append(x.title().strip(" "))
+      for a in classes_strip:
+        StudentRecords.students_classes[name].append(a)
+    else:
+      StudentRecords.students_classes[name].append(classes.title().strip(" "))
+  def removeClasses (self, name, classes):
+    if "," in classes:
+      classes_split = classes.split(",")
+      classes_strip = []
+      for x in classes_split:
+        classes_strip.append(x.title().strip(" "))
+      for x in classes_strip:
+        StudentRecords.students_classes[name].remove(x)
+    else:
+      StudentRecords.students_classes[name].remove(classes.strip(" "))
+  def __repr__(self):
+    return "Student Information:\nName: {}\nAge: {}\nGrade Level: {}\nClasses: None".format(self.name,self.age,self.grade_level)
+  def seeExistingStudentInformation (self,name):
+    return "Student Information:\nName: {}\nAge: {}\nGrade Level: {}\nClasses: {}".format(name,StudentRecords.students[name][0], StudentRecords.students[name][1],StudentRecords.students_classes[name])
+
+for x in range(20):
+  start = input("Please input the number of the action you wish to take:\n1. Create a New Student\n2. Existing Student\nPlease enter the number here: ")
+  if start == "1":
+    name = input("Please enter the student's full name here: ")
+    age = input("Please enter the student's age here: ")
+    grade_level = input("Please enter the student's grade level here: ")
+    print("Congratulations! The student has been successfully added to our database. To add or update this student's classes, please input number 2.")
+    student = StudentRecords(name.title().strip(" "), age, grade_level)
+    print(student)
+    print("\n")
+  if start == "2":
+    start = input("Please input the number of the action you wish to take:\n1. Set Classes\n2. Add Classes\n3. Remove Classes.\nPlease enter the number here: ")
+    name = input("Please enter the student's full name: ")
+    if start == "1":
+      classes = input("Please enter the classes: ")
+      student.setClasses(name.title().strip(" "), classes.title())
+    if start == "2":
+      classes = input("Please enter the classes you wish to add: ")
+      student.addClasses(name.title().strip(" "), classes)
+    if start == "3":
+      classes = input("Please enter the classes you wish to remove: ")
+      student.removeClasses(name.title().strip(" "),classes.title())
+    print("Please see the updated information below: ")
+    print(student.seeExistingStudentInformation(name.title().strip(" ")))
+    print("\n")
+
+
+
+      
