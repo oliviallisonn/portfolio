@@ -261,10 +261,10 @@ while True:
   if start == "1":
     task = input("Please enter the new task here: ")
     day = input("Please enter the day here: ")
-    #try:
-    new_user = Schedule(name.title().strip(" "), day.title().strip(" "), task.lower().strip(" "))
-    #except:
-      #print("Invalid day input!\n")
+    try:
+      new_user = Schedule(name.title().strip(" "), day.title().strip(" "), task.lower().strip(" "))
+    except:
+      print("Invalid day input!\n")
   if start == "2":
     task = input("Please enter the task you want to remove: ")
     try:
@@ -281,8 +281,8 @@ while True:
       print("This name is not in our database!\n")
     except NameError:
       print("This name is not in our database!\n")
-    #except TypeError:
-      #print("Invalid task entered!\n")
+    except TypeError:
+      print("Invalid task entered!\n")
   if start == "4":
     task = input("Which task do you want to be moved?: ")
     new_day = input("Which day do you want to move this to?: ")
