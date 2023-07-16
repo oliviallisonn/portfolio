@@ -1,189 +1,323 @@
-weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-
-class schedule:
+class Schedule:
   ongoing = {}
-  done = {}
-  def __init__(self,name,task,day):
+  completed = {}
+  days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+  def __init__(self,name,day,task):
     self.name = name
-    self.task = task
     self.day = day
-    if self.name not in schedule.ongoing:
-      schedule.ongoing[self.name] = {self.day : [self.task]}
-    elif self.name in schedule.ongoing and self.day not in schedule.ongoing[self.name]:
-      schedule.ongoing[self.name].update({self.day : [self.task]})
-    elif self.name in schedule.ongoing and self.day in schedule.ongoing[self.name]:
-      schedule.ongoing[self.name][self.day].append(self.task)
-    print("Your task has successfully been added!\n")
-  def change_status(self,name,task,day):
-    if name in schedule.ongoing or name in schedule.done:
-      for x in schedule.ongoing[name][day]:
-        if task in x or task == x:
-          if name not in schedule.done:
-            schedule.done[name] = {day : [x]}
-            schedule.ongoing[name][day].remove(x)
-            print("Status change successful!\n")
-            break
-        elif name in schedule.done:
-          if day in schedule.done[name]:
-            schedule.done[name][day].append(x)
-            print("Status change successful!\n")
-            break
-          elif day not in schedule.done[name]:
-            schedule.done[name][day] = [x]
-            print("Status change successful!\n")
-            break
-        else:
-          raise TypeError
-    else:
-      raise KeyError
-  def remove_task(self,name,day,task,status):
-    if name in schedule.ongoing or name in schedule.done:
-      if status == "pending":
-        for x in schedule.ongoing[name][day]:
-          if task in x or task == x:
-            schedule.ongoing[name][day].remove(x)
-            print("This task has been removed!\n")
-            break
-      if status == "done":
-        for x in schedule.done[name][day]:
-          if task in x or task == x:
-            schedule.ongoing[name][day].remove(x)
-            print("This task has been removed!\n")
-            break
-    else:
+    self.task = task
+    if self.day not in Schedule.days:
       raise exception
-  def view_summary (self,name):
-    print("{}'s Week Ahead: ".format(name))
-    for day in weekdays:
-      print("{}:".format(day.upper()))
-      if name in schedule.ongoing:
-        if day in schedule.ongoing[name]:
-          if len(schedule.ongoing[name][day]) > 0:
-            print("Pending Tasks: ")
-            for x in schedule.ongoing[name][day]:
-              print("- {}".format(x))
-      if name in schedule.done:
-        if day in schedule.done[name]:
-          if len(schedule.done[name][day]) > 0:
-            print("Completed Tasks: ")
-            for x in schedule.done[name][day]:
-              print("- {}".format(x))
-    
+    if self.name not in Schedule.ongoing:
+      Schedule.ongoing[self.name] = {self.day:[self.task]}
+      print("\nNew task added!")
+    elif self.name in Schedule.ongoing:
+      if day in Schedule.ongoing[name]:
+        Schedule.ongoing[name][day].append(self.task)
+        print("\nNew task added!")
+      elif day not in Schedule.ongoing[name]:
+        Schedule.ongoing[name].update({self.day: [self.task]})
+        print("\nNew task added!")
+  def remove_task (self,name,task):
+    status = False
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise KeyError
+    if name in Schedule.ongoing:
+      for day in Schedule.days:
+        if day in Schedule.ongoing[name]:
+          for x in Schedule.ongoing[name][day]:
+            if task in x or task == x:
+              Schedule.ongoing[name][day].remove(x)
+              print("\nTask successfully removed!")
+              status = True
+              break
+    elif name in Schedule.completed and status == False:
+      for day in days:
+        if day in Schedule.completed[name]:
+          for x in Schedule.completed[name][day]:
+            if task in x or task == x:
+              Schedule.completed[name][day].remove(x)
+              print("\nTask successfully removed!")
+              break
+    else:
+      raise TypeError
+  def change_status(self,name,task):
+    status = False
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise NameError
+    for day in Schedule.days:
+      if status == False:
+        if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+          if len(Schedule.ongoing[name][day]) > 0:
+            for x in Schedule.ongoing[name][day]:
+              if task in x or task == x:
+                if name in Schedule.completed and day in Schedule.completed[name]:
+                  Schedule.completed[name][day].append(x)
+                  Schedule.ongoing[name][day].remove(x)
+                  print("\nTask status successfully changed!")
+                  status = True
+                  break
+                elif name in Schedule.completed and day not in Schedule.completed[name]:     
+                  Schedule.completed[name].update({day: [x]})
+                  Schedule.ongoing[name][day].remove(x)
+                  print("\nTask status successfully changed!")
+                  status = True
+                  break       
+                elif name not in Schedule.completed:
+                  Schedule.completed[name] = {day : [x]}
+                  print(Schedule.completed)
+                  Schedule.ongoing[name][day].remove(x)
+                  print("\nTask status successfully changed!")
+                  status = True
+                  break
+    if status == False:
+      for day in Schedule.days:
+        if status == False:
+          if name in Schedule.completed and day in Schedule.completed[name]:
+            if len(Schedule.completed[name][day]) > 0:
+              for x in Schedule.completed[name][day]:
+                if task in x or task == x:
+                  if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+                    Schedule.ongoing[name][day].append(x)
+                    Schedule.completed[name][day].remove(x)
+                    print("\nTask status successfully changed!")
+                    status = True
+                    break
+                  elif name in Schedule.ongoing and day not in Schedule.ongoing[name]:
+                    Schedule.ongoing[name].update({day:[x]})
+                    Schedule.completed[name][day].remove(x)
+                    print("\nTask status successfully changed!")
+                    status = True
+                    break
+                  elif name not in Schedule.ongoing:
+                    Schedule.ongoing[name] = {day:[x]}
+                    Schedule.completed[name][day].remove(x)
+                    print("\nTask status successfully changed!")
+                    status = True
+                    break
+    if status == False:
+      raise TypeError
+  def change_day (self,name,task,new_day):
+    status = False
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise NameError
+    if new_day not in Schedule.days:
+      raise KeyError
+    if name in Schedule.ongoing:
+      for day in Schedule.days:
+        if status == False:
+          if day in Schedule.ongoing[name] and len(Schedule.ongoing[name][day]) > 0:
+            for x in Schedule.ongoing[name][day]:
+              if task in x or task == x:
+                if new_day in Schedule.ongoing[name]:
+                  Schedule.ongoing[name][new_day].append(x)
+                  Schedule.ongoing[name][day].remove(x)
+                  print("\nTask has been moved to {}!",format(new_day))
+                  status = True
+                  break
+                elif new_day not in Schedule.ongoing[name]:
+                  Schedule.ongoing[name].update({new_day: [x]})
+                  Schedule.ongoing[name][day].remove(x)
+                  print("\nTask has been moved to {}!".format(new_day))
+                  status = True
+                  break
+        else:
+          break
+    if name in Schedule.completed:
+      for day in Schedule.days:
+        if status == False:
+          if day in Schedule.completed[name] and len(Schedule.completed[name][day]) > 0:
+            for x in Schedule.completed[name][day]:
+              if task in x or task == x:
+                if new_day in Schedule.completed[name]:
+                  Schedule.completed[name][new_day].append(x)
+                  Schedule.completed[name][day].remove(x)
+                  print("\nTask has been moved to {}!".format(new_day))
+                  status = True
+                  break
+                elif new_day not in Schedule.completed[name]:
+                  Schedule.completed[name].update({new_day: [x]})
+                  Schedule.completed[name][day].remove(x)
+                  print("\nTask has been successfully moved to {}!".format(new_day))
+                  status = True
+                  break
+          else:
+            continue
+    if status == False:
+      raise TypeError
   def view_day (self,name,day):
-    print("{}'s {}".format(name, day))
-    if name in schedule.ongoing or name in schedule.done:
-      if name in schedule.ongoing:
-        if day in schedule.ongoing[name]:
-          print("Pending Tasks: ")
-          for x in schedule.ongoing[name][day]: 
-            print("- {}".format(x))
-        else:
-          print("Pending: None")
-      else:
-        print("Pending: None")
-      if name in schedule.done:
-        if day in schedule.done[name]:
-          print("Completed Tasks: ")
-          for x in schedule.done[name][day]: 
-            print("- {}".format(x))
-        else:
-          print("Completed: None")
-      else:
-        print("Completed: None")
-    else:
+    status_ongoing = False
+    status_completed = False
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise NameError
+    if day not in Schedule.days:
       raise KeyError
+    print("\n{}'S {}:".format(name.upper(), day.upper()))
+    if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+      if len(Schedule.ongoing[name][day]) > 0:
+        print("Pending: ")
+        for x in Schedule.ongoing[name][day]:
+          print("- {}".format(x))
+        status_ongoing = True
+    if name in Schedule.completed and day in Schedule.completed[name]:
+      if len(Schedule.completed[name][day]) > 0:
+        print("Completed: ")
+        for x in Schedule.completed[name][day]:
+          print("- {}".format(x))
+        status_completed = True
+    if status_ongoing == False and status_completed == False:
+      print("No tasks for this day.")
+  def view_week(self,name):
+    status_ongoing = False
+    status_completed = False
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise NameError
     print("\n")
-  def clear_week(self,name):
-    for day in weekdays:
-      schedule.ongoing[name][day] = []
-      schedule.done[name][day] = []
-    print("Your schedule has been cleared!\n")
-  def change_day(self,name,original_day,new_day,task,status):
-    if name in schedule.ongoing or name in schedule.done:
-      if status == "pending":
-        for x in schedule.ongoing[name][original_day]:
-          if task in x or task == x:
-            if new_day in schedule.ongoing[name]:
-              schedule.ongoing[name][new_day] + [x]
-              schedule.ongoing[name][original_day].remove(x)
-              print("This task has been successfully moved.\n")
-              break
-            else:
-              schedule.ongoing[name][new_day] = [x]
-              schedule.ongoing[name][original_day].remove(x)
-              print("This task has been successfully moved.\n")
-              break
-      elif status == "done":
-        for x in schedule.done[name][original_day]:
-          if task in x or task == x:
-            if new_day in schedule.done[name]:
-              schedule.done[name][new_day] + [x]
-              schedule.done[name][original_day].remove(x)
-              print("This task has been successfully moved.\n")
-              break
-            else:
-              schedule.done[name][new_day] = [x]
-              schedule.done[name][original_day].remove(x)
-              print("This task has been successfully moved.\n")
-              break
-      else:
-        raise TypeError
-    else:
+    for day in Schedule.days:
+      print("{}".format(day.upper()))
+      if name in Schedule.ongoing:
+        if day in Schedule.ongoing[name] and len(Schedule.ongoing[name][day]) > 0:
+          print("Pending Tasks: ")
+          for x in Schedule.ongoing[name][day]:
+            print("- {}".format(x))
+          status_ongoing = True
+      if name in Schedule.completed:
+        if day in Schedule.completed[name] and len(Schedule.completed[name][day]) > 0:
+          print("Completed Tasks: ")
+          for x in Schedule.completed[name][day]:
+            print("- {}".format(x))
+          status_completed = True
+      if status_ongoing == False and status_completed == False:
+        print("No tasks for this day.")
+      status_ongoing = False
+      status_completed = False
+  def clear_day(self,name,day,to_clear):
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise NameError
+    if day not in Schedule.days:
       raise KeyError
-
+    if to_clear == "Ongoing":
+      if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+        if len(Schedule.ongoing[name][day]) > 0:
+          Schedule.ongoing[name][day] = []
+          print("\n{}'s ongoing tasks for {} have been cleared!\n".format(name,day))
+        else:
+          print("\n{} has no ongoing tasks for {}".format(name,day))
+      else:
+        print("\n{} have no ongoing tasks for {}".format(name,day))
+    elif to_clear == "Completed":
+      if name in Schedule.completed and day in Schedule.completed[name]:
+        if len(Schedule.completed[name][day]) > 0:
+          Schedule.completed[name][day] = []
+          print("\n{}'s completed tasks for {} have been cleared!\n".format(name,day))
+        else:
+          print("\n{} have no completed tasks for {}".format(name,day))
+      else:
+        print("\n{} have no ongoing tasks for {}".format(name,day))
+    elif to_clear == "Both":
+      if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+        if len(Schedule.ongoing[name][day]) > 0:
+          Schedule.ongoing[name][day] = []
+          print("\n{}'s ongoing tasks for {} have been cleared!".format(name,day))
+      else:
+        print("\n{} have no ongoing tasks for {}".format(name,day))
+      if name in Schedule.completed and day in Schedule.completed[name]:
+        if len(Schedule.completed[name][day]) > 0:
+          Schedule.completed[name][day] = []
+          print("\n{}'s completed tasks for {} have been cleared!".format(name,day))
+      else:
+        print("\n{} have no ongoing tasks for {}".format(name,day))
+    elif "Ongoing" in to_clear and "Completed" in to_clear:
+      if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+        if len(Schedule.ongoing[name][day]) > 0:
+          Schedule.ongoing[name][day] = []
+          print("\n{}'s ongoing tasks for {} have been cleared!".format(name,day))
+        else:
+          print("\n{} have no ongoing tasks for {}".format(name,day))
+      else:
+        print("\n{} have no ongoing tasks for {}".format(name,day))
+      if name in Schedule.completed and day in Schedule.completed[name]:
+        if len(Schedule.completed[name][day]):
+          Schedule.completed[name][day] = []
+          print("\n{}'s completed tasks for {} have been cleared!\n".format(name,day))
+        else:
+          print("\n{} have no ongoing tasks for {}".format(name,day))
+      else:
+        print("\n{} have no ongoing tasks for {}".format(name,day))
+  def clear_week(self,name):
+    if name not in Schedule.ongoing and name not in Schedule.completed:
+      raise NameError
+    for day in Schedule.days:
+      if name in Schedule.ongoing and day in Schedule.ongoing[name]:
+        Schedule.ongoing[name][day] = []
+      if name in Schedule.completed and day in Schedule.completed[name]:
+        Schedule.completed[name][day] = []
+    print("\n{}'s week has been cleared!\n".format(name))
+  
+print("SCHEDULE MANAGER")
 while True:
-  start = input("Please choose the number of the action you wish to take:\n1. Add new task\n2. Change status of existing task\n3. Remove task\n4. Change day of task\n5. View tasks for a certain day\n6. View weekly summary\n7. Clear week\nEnter the number here: ")
-  name = input("Please enter your name: ")
+  start = input("\nPlease choose the number of the action you wish to take:\n1. Add a new task\n2. Remove a task\n3. Change task status\n4. Change task day\n5. View day schedule\n6. View week summary\n7. Clear day\n8. Clear week\nEnter the number here: ")
+  name = input("Please enter your name here: ")
   if start == "1":
-    task = input("Please enter new task: ")
-    day = input("Please enter due day: ")
-    if day.title() in weekdays:
-      new_user = schedule(name.title().strip(" "), task.lower().strip(" "), day.title().strip(" "))
-    else:
-      raise exception("Invalid day entered.\n")
+    task = input("Please enter the new task here: ")
+    day = input("Please enter the day here: ")
+    #try:
+    new_user = Schedule(name.title().strip(" "), day.title().strip(" "), task.lower().strip(" "))
+    #except:
+      #print("Invalid day input!\n")
   if start == "2":
-    task = input("Please enter the task you wish to revise: ")
-    day = input("Please choose the day this task was assigned to: ")
-    if day.title().strip(" ") in weekdays:
-      try:
-        new_user.change_status(name.title().strip(" "), task.lower().strip(" "), day.title().strip(" "))
-      except TypeError:
-        print("This task is not in our database.\n")
-      except KeyError:
-        print("This name is not in our database.\n")
-    else:
-      raise exception ("Invalid day entered.\n")
-  if start == "3":
-    task = input("Please enter the task you wish to remove: ")
-    status = input("Was this task pending or done?: ")
-    day = input("Please enter the day that this task was listed under: ")
-    if day.title().strip(" ") in weekdays:
-      try:
-        new_user.remove_task(name.title().strip(" "),day.title().strip(" "),task.lower(),status.lower())
-      except:
-        print("This name cannot be found in the database.\n")
-  if start == "4":
-    task = input("Which task do you want to move?: ")
-    status = input("Was this task pending or done?: ")
-    original_day = input("Which day was this originally assigned to?: ")
-    new_day = input("Which day do you want this task on?: ")
-
+    task = input("Please enter the task you want to remove: ")
     try:
-      new_user.change_day(name.title().strip(" "), original_day.title().strip(" "), new_day.title().strip(" "), task.lower().strip(" "), status.lower().strip(" "))
+      new_user.remove_task(name.title().strip(" "), task.lower().strip(" "))
     except KeyError:
-      print("This name doesn't exist in our database.\n")
+      print("This name is not in our database!\n")
     except TypeError:
-      print("Invalid status input.\n")
+      print("This task is not in our database!\n")
+  if start == "3":
+    task = input("Please enter the task that you want to change the status of: ")
+    try:
+      new_user.change_status(name.title().strip(" "), task.lower().strip(" "))
+    except KeyError:
+      print("This name is not in our database!\n")
+    except NameError:
+      print("This name is not in our database!\n")
+    #except TypeError:
+      #print("Invalid task entered!\n")
+  if start == "4":
+    task = input("Which task do you want to be moved?: ")
+    new_day = input("Which day do you want to move this to?: ")
+    try:
+      new_user.change_day(name.title().strip(" "),task.lower().strip(" "),new_day.title().strip(" "))
+    except NameError:
+      print("This name is not in our database!\n")
+    except KeyError:
+      print("Invalid day entered!\n")
+    except TypeError:
+      print("This task is not in our database!\n")
   if start == "5":
-    day = input("Please enter the day you wish to review: ")
-    if day.title().strip(" ") in weekdays:
-      try:
-        new_user.view_day(name.title().strip(" "), day.title().strip(" "))
-      except:
-        print("This name is not in our database.\n")
-    else:
-      raise exception ("Invalid day entered")
+    day = input("Please enter the day you want to review: ")
+    try:
+      new_user.view_day(name.title().strip(" "), day.title().strip(" "))
+    except NameError:
+      print("This name is not in our database!\n")
+    except KeyError:
+      print("Invalid day input!\n")
   if start == "6":
-    new_user.view_summary(name.title().strip(" "))
+    try:
+      new_user.view_week(name.title().strip(" "))
+    except NameError:
+      print("This name is not in our database!\n")
   if start == "7":
-    new_user.clear_week(name.title().strip(" "))
+    day = input("Please enter the day you want to clear: ")
+    to_clear = input("Do you want to clear ongoing, completed or both?: ")
+    try:
+      new_user.clear_day(name.title().strip(" "), day.title().strip(" "), to_clear.title().strip(" "))
+    except NameError:
+      print("This name is not in our database!\n")
+    except KeyError:
+      print("Invalid day input!\n")
+  if start == "8":
+    try:
+      new_user.clear_week(name.title().strip(" "))
+    except NameError:
+      print("This name is not in our database!\n")
