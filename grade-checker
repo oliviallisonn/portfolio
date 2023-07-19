@@ -1,0 +1,36 @@
+proceed = "Yes"
+subject = " "
+score = 0
+subjects = []
+grade = []
+
+while proceed == "Yes":
+  subject = input("Subject: ")
+  subjects.append(subject)
+  score = int(input("Grade: "))
+  grade.append(score)
+  proceed = input("More?: ")
+
+grades = {key:value for key, value in zip(subjects,grade)}
+
+lowest = 100
+highest = 0
+keys = list(grades.keys())
+values = list(grades.values())
+lowest_index = 0
+highest_index = 0
+
+for key, value in grades.items():
+  if value > highest:
+    highest = value
+    highest_index = values.index(highest)
+
+  if value < lowest:
+    lowest = value
+    lowest_index = values.index(lowest)
+
+print("\nSummary: " + str(grades))
+print("Highest Grade: " + str(keys[highest_index]) + " " + str(highest))
+print("Lowest Grade: " + str(keys[lowest_index]) + " " + str(lowest))
+  
+
