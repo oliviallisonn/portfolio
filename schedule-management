@@ -65,7 +65,6 @@ class Schedule:
                   break       
                 elif name not in Schedule.completed:
                   Schedule.completed[name] = {day : [x]}
-                  print(Schedule.completed)
                   Schedule.ongoing[name][day].remove(x)
                   print("\nTask status successfully changed!")
                   status = True
@@ -112,7 +111,7 @@ class Schedule:
                 if new_day in Schedule.ongoing[name]:
                   Schedule.ongoing[name][new_day].append(x)
                   Schedule.ongoing[name][day].remove(x)
-                  print("\nTask has been moved to {}!",format(new_day))
+                  print("\nTask has been moved to {}!".format(new_day))
                   status = True
                   break
                 elif new_day not in Schedule.ongoing[name]:
@@ -204,14 +203,14 @@ class Schedule:
         else:
           print("\n{} has no ongoing tasks for {}".format(name,day))
       else:
-        print("\n{} have no ongoing tasks for {}".format(name,day))
+        print("\n{} has no ongoing tasks for {}".format(name,day))
     elif to_clear == "Completed":
       if name in Schedule.completed and day in Schedule.completed[name]:
         if len(Schedule.completed[name][day]) > 0:
           Schedule.completed[name][day] = []
           print("\n{}'s completed tasks for {} have been cleared!\n".format(name,day))
         else:
-          print("\n{} have no completed tasks for {}".format(name,day))
+          print("\n{} has no completed tasks for {}".format(name,day))
       else:
         print("\n{} have no ongoing tasks for {}".format(name,day))
     elif to_clear == "Both":
@@ -220,30 +219,30 @@ class Schedule:
           Schedule.ongoing[name][day] = []
           print("\n{}'s ongoing tasks for {} have been cleared!".format(name,day))
       else:
-        print("\n{} have no ongoing tasks for {}".format(name,day))
+        print("\n{} has no ongoing tasks for {}".format(name,day))
       if name in Schedule.completed and day in Schedule.completed[name]:
         if len(Schedule.completed[name][day]) > 0:
           Schedule.completed[name][day] = []
-          print("\n{}'s completed tasks for {} have been cleared!".format(name,day))
+          print("{}'s completed tasks for {} have been cleared!".format(name,day))
       else:
-        print("\n{} have no ongoing tasks for {}".format(name,day))
+        print("{} has no completed tasks for {}".format(name,day))
     elif "Ongoing" in to_clear and "Completed" in to_clear:
       if name in Schedule.ongoing and day in Schedule.ongoing[name]:
         if len(Schedule.ongoing[name][day]) > 0:
           Schedule.ongoing[name][day] = []
           print("\n{}'s ongoing tasks for {} have been cleared!".format(name,day))
         else:
-          print("\n{} have no ongoing tasks for {}".format(name,day))
+          print("\n{} has no ongoing tasks for {}".format(name,day))
       else:
-        print("\n{} have no ongoing tasks for {}".format(name,day))
+        print("\n{} has no ongoing tasks for {}".format(name,day))
       if name in Schedule.completed and day in Schedule.completed[name]:
         if len(Schedule.completed[name][day]):
           Schedule.completed[name][day] = []
-          print("\n{}'s completed tasks for {} have been cleared!\n".format(name,day))
+          print("{}'s completed tasks for {} have been cleared!\n".format(name,day))
         else:
-          print("\n{} have no ongoing tasks for {}".format(name,day))
+          print("{} has no completed tasks for {}".format(name,day))
       else:
-        print("\n{} have no ongoing tasks for {}".format(name,day))
+        print("{} has no completed tasks for {}".format(name,day))
   def clear_week(self,name):
     if name not in Schedule.ongoing and name not in Schedule.completed:
       raise NameError
@@ -265,7 +264,7 @@ while True:
       new_user = Schedule(name.title().strip(" "), day.title().strip(" "), task.lower().strip(" "))
     except:
       print("Invalid day input!\n")
-  if start == "2":
+  elif start == "2":
     task = input("Please enter the task you want to remove: ")
     try:
       new_user.remove_task(name.title().strip(" "), task.lower().strip(" "))
@@ -273,7 +272,7 @@ while True:
       print("This name is not in our database!\n")
     except TypeError:
       print("This task is not in our database!\n")
-  if start == "3":
+  elif start == "3":
     task = input("Please enter the task that you want to change the status of: ")
     try:
       new_user.change_status(name.title().strip(" "), task.lower().strip(" "))
@@ -283,7 +282,7 @@ while True:
       print("This name is not in our database!\n")
     except TypeError:
       print("Invalid task entered!\n")
-  if start == "4":
+  elif start == "4":
     task = input("Which task do you want to be moved?: ")
     new_day = input("Which day do you want to move this to?: ")
     try:
@@ -294,7 +293,7 @@ while True:
       print("Invalid day entered!\n")
     except TypeError:
       print("This task is not in our database!\n")
-  if start == "5":
+  elif start == "5":
     day = input("Please enter the day you want to review: ")
     try:
       new_user.view_day(name.title().strip(" "), day.title().strip(" "))
@@ -302,12 +301,12 @@ while True:
       print("This name is not in our database!\n")
     except KeyError:
       print("Invalid day input!\n")
-  if start == "6":
+  elif start == "6":
     try:
       new_user.view_week(name.title().strip(" "))
     except NameError:
       print("This name is not in our database!\n")
-  if start == "7":
+  elif start == "7":
     day = input("Please enter the day you want to clear: ")
     to_clear = input("Do you want to clear ongoing, completed or both?: ")
     try:
@@ -316,8 +315,13 @@ while True:
       print("This name is not in our database!\n")
     except KeyError:
       print("Invalid day input!\n")
-  if start == "8":
+  elif start == "8":
     try:
       new_user.clear_week(name.title().strip(" "))
     except NameError:
       print("This name is not in our database!\n")
+  elif start == "View" or start == "view":
+  	print("Ongoing: {}".format(Schedule.ongoing))
+  	print("Completed: {}".format(Schedule.completed))
+  else:
+  	print("Sorry, invalid input. Please try again")
