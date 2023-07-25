@@ -1,0 +1,119 @@
+username = " "
+password = " "
+
+import sqlite3
+import smtplib
+from email.message import EmailMessage
+
+connect = sqlite3.connect(":memory:")
+x = connect.cursor()
+x.execute("""CREATE TABLE customer_reqs(
+    customer_name TEXT,
+    recipient_name TEXT,
+    recipient_email TEXT,
+    message TEXT
+    );""")
+connect.commit()
+
+
+class Customer:
+    def __init__(self, sender_name, recipient_name, recipient_email, message):
+        self.sender_name = sender_name.title()
+        self.recipient_name = recipient_name.title()
+        if "@gmail.com" in recipient_email:
+            self.recipient_email = recipient_email.lower().strip()
+        else:
+            self.recipient_email = "{}@gmail.com".format(
+                recipient_email.lower().strip())
+        self.message = message
+        x.execute("INSERT INTO customer_reqs VALUES(:sender_name,:recipient_name,:recipient_email,:message)", {
+                  "sender_name": self.sender_name, "recipient_name": self.recipient_name, "recipient_email": self.recipient_email, "message": self.message})
+        connect.commit()
+        print("\nYour request has successfully been added to the database!\n")
+
+    def view_request(self, name):
+        x.execute(
+            "SELECT * FROM customer_reqs WHERE customer_name LIKE :name", {"name": name.title()})
+        if len(x.fetchall()) > 0:
+            x.execute(
+                "SELECT * FROM customer_reqs WHERE customer_name LIKE :name", {"name": name.title()})
+        for request in x.fetchall():
+            sender, recipient_name, recipient_email, message = request
+            print("\nSEND TO: {}({})\nMESSAGE: {}\n".format(
+                recipient_name, recipient_email, message))
+         else:
+            raise exception
+
+    def send_message(self, name, recipient):
+        x.execute("SELECT * FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient;",
+                  {"name": name.title(), "recipient": recipient.title()})
+        if len(x.fetchall()) > 0:
+            x.execute("SELECT * FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient;",
+                      {"name": name.title(), "recipient": recipient.title()})
+            request = x.fetchall()
+            sender_name, recipient_name, recipient_email, message = request[
+                0]
+            draft = EmailMessage()
+            draft["Subject"] = "A message to {} from {}".format(
+                recipient_name.title(), sender_name.title())
+            draft["From"] = username
+            draft["To"] = recipient_email
+            draft.set_content(message)
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+                smtp.login(username, password)
+                smtp.send_message(draft)
+                print("Your draft is on its way to {}!".format(
+                    self.recipient_name))
+            x.execute("DELETE FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient_name", {
+                      "name": name, "recipient_name": recipient})
+            connect.commit()
+            print("\nYour message to {} has been sent!\n".format(recipient_name.title()))
+        else:
+            raise exception
+
+    def edit_message(self, name, recipient, new_message):
+        x.execute("SELECT * FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient",
+                  {"name": name.title(), "recipient": recipient.title()})
+        if len(x.fetchall()) > 0:
+            x.execute("UPDATE customer_reqs SET message = :message WHERE customer_name LIKE :name AND recipient_name LIKE :recipient", {
+                      "message": new_message, "name": name.title(), "recipient": recipient.title()})
+            print("\nYour message to {} has successfully been updated!\n".format(
+                recipient.title()))
+        else:
+            raise exception
+
+
+while True:
+    start = input("Please enter the number that corresponds to the action you want to take:\n1. Submit a new draft request\n2. Send draft message to recipient\n3. View request\n4. Edit draft\nEnter the number here: ")
+    name = input("Please enter your name: ")
+    if start == "1":
+        recipient_name = input("Please enter the recipeint of this message: ")
+        recipient_email = input("Please enter the recipient's email: ")
+        message = input(
+            "Please enter the message you wish to send to {}: ".format(recipient_name))
+        user = Customer(name, recipient_name, recipient_email, message)
+    elif start == "2":
+        recipient_name = input("Please enter the recipeint of this message: ")
+        try:
+            user.send_message(name, recipient_name)
+        except:
+            print("Sorry, this request is not in our database!\n")
+    elif start == "3":
+        try:
+            user.view_request(name)
+        except:
+            print("Sorry, this request is not in our database!\n")
+    elif start == "4":
+        recipient_name = input("Please enter the recipeint of this message: ")
+        new_message = input("Please enter your new message here: ")
+        try:
+            user.edit_message(name, recipient_name, new_message)
+        except:
+            print("Sorry, this request is not in our database!\n")
+    elif start == "view":
+        x.execute("SELECT * FROM customer_reqs")
+        for entry in x.fetchall():
+            print(entry)
+    else:
+        raise exception("Sorry, this was an invalid input. Please try again.")
