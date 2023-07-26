@@ -1,119 +1,226 @@
-username = " "
-password = " "
-
+import os
 import sqlite3
 import smtplib
+import imghdr
 from email.message import EmailMessage
+from datetime import datetime
 
 connect = sqlite3.connect(":memory:")
 x = connect.cursor()
-x.execute("""CREATE TABLE customer_reqs(
-    customer_name TEXT,
+x.execute("""CREATE TABLE email(
+    sender_name TEXT,
     recipient_name TEXT,
     recipient_email TEXT,
-    message TEXT
-    );""")
+    subject TEXT,
+    message TEXT,
+    attachment TEXT,
+    date_sent TEXT);""")
 connect.commit()
 
+username = os.environ.get("EMAIL_USERNAME")
+password = os.environ.get("EMAIL_PASSWORD")
 
-class Customer:
-    def __init__(self, sender_name, recipient_name, recipient_email, message):
-        self.sender_name = sender_name.title()
-        self.recipient_name = recipient_name.title()
-        if "@gmail.com" in recipient_email:
-            self.recipient_email = recipient_email.lower().strip()
-        else:
-            self.recipient_email = "{}@gmail.com".format(
-                recipient_email.lower().strip())
-        self.message = message
-        x.execute("INSERT INTO customer_reqs VALUES(:sender_name,:recipient_name,:recipient_email,:message)", {
-                  "sender_name": self.sender_name, "recipient_name": self.recipient_name, "recipient_email": self.recipient_email, "message": self.message})
-        connect.commit()
-        print("\nYour request has successfully been added to the database!\n")
 
-    def view_request(self, name):
+class Email:
+    def send_email_none(self, sender_name, recipient_name, recipient_email, subject, email_message):
         x.execute(
-            "SELECT * FROM customer_reqs WHERE customer_name LIKE :name", {"name": name.title()})
+            "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": "None", "date_sent": datetime.now()})
+        connect.commit()
+        message = EmailMessage()
+        message["From"] = username
+        message["To"] = recipient_email
+        message["Subject"] = subject
+        message.set_content(email_message)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(username, password)
+            smtp.send_message(message)
+        print("\nYour message to {} has been sent!\n".format(recipient_name))
+
+    def send_email_attachment(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name, attachment_type):
+        x.execute(
+            "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": attachment_name + str((" " + attachment_type)), "date_sent": datetime.now()})
+        connect.commit()
+        message = EmailMessage()
+        message["From"] = username
+        message["To"] = recipient_email
+        message["Subject"] = subject
+        message.set_content(email_message)
+        path_desktop = "/Users/olivia/Desktop"
+        path_docs = "/Users/olivia/Documents"
+        path_gifs = "/Users/olivia/Documents/GIFs"
+        if os.path.exists(os.path.join(path_desktop, attachment_name)):
+            file_path = os.path.join(path_desktop, attachment_name)
+        elif os.path.exists(os.path.join(path_docs, attachment_name)):
+            file_path = os.path.join(path_docs, attachment_name)
+        elif os.path.exists(os.path.join(path_gifs, attachment_name)):
+            file_path = os.path.join(path_gifst, attachment_name)
+        with open(file_path, "rb") as file:
+            file_data = file.read()
+            try:
+                file_type = imghdr.what(file.name)
+                file_name = attachment_name
+                message.add_attachment(file_data, maintype="image",
+                                       subtype=file_type, filename=file_name)
+            except:
+                file_name = attachment_name
+                message.add_attachment(
+                    file_data, maintype="application", subtype="octet-stream", filename=file_name)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(username, password)
+            smtp.send_message(message)
+        print("\nYour message and attachment have been sent to {}!\n".format(
+            recipient_name))
+
+    def send_email_attachments(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_names):
+        x.execute(
+            "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": attachment_names, "date_sent": datetime.now()})
+        connect.commit()
+        attachment_names_list = attachment_names.split(",")
+        attachment_names_list_final = []
+        for name in attachment_names_list:
+            attachment_names_list_final.append(name.strip())
+        message = EmailMessage()
+        message["From"] = username
+        message["To"] = recipient_email
+        message["Subject"] = subject
+        message.set_content(email_message)
+        path_desktop = "/Users/olivia/Desktop"
+        path_docs = "/Users/olivia/Documents"
+        path_gifs = "/Users/olivia/Documents/GIFs"
+        file_path = ""
+        for key in attachment_names_list_final:
+            if os.path.exists(os.path.join(path_desktop, key)):
+                file_path = os.path.join(path_desktop, key)
+            elif os.path.exists(os.path.join(path_docs, key)):
+                file_path = os.path.join(path_docs, key)
+            elif os.path.exists(os.path.join(path_gifs, key)):
+                file_path = os.path.join(path_gifs, key)
+            if file_path is not "":
+                with open(file_path, "rb") as file:
+                    file_data = file.read()
+                    try:
+                        file_type = imghdr.what(file.name)
+                        file_name = key
+                        message.add_attachment(
+                            file_data, maintype="image", subtype="pic_type", filename=file_name)
+                    except:
+                        file_name = key
+                        message.add_attachment(
+                            file_data, maintype="application", subtype="octet-stream", filename=file_name)
+            else:
+                raise exception
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(username, password)
+            smtp.send_message(message)
+            print("\nYour message and attachments have been sent to {}!\n".format(
+                recipient_name))
+
+    def view_emails(self, sender_name):
+        x.execute("SELECT * FROM email WHERE sender_name LIKE :sender_name;",
+                  {"sender_name": sender_name})
         if len(x.fetchall()) > 0:
-            x.execute(
-                "SELECT * FROM customer_reqs WHERE customer_name LIKE :name", {"name": name.title()})
-        for request in x.fetchall():
-            sender, recipient_name, recipient_email, message = request
-            print("\nSEND TO: {}({})\nMESSAGE: {}\n".format(
-                recipient_name, recipient_email, message))
-         else:
-            raise exception
-
-    def send_message(self, name, recipient):
-        x.execute("SELECT * FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient;",
-                  {"name": name.title(), "recipient": recipient.title()})
-        if len(x.fetchall()) > 0:
-            x.execute("SELECT * FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient;",
-                      {"name": name.title(), "recipient": recipient.title()})
-            request = x.fetchall()
-            sender_name, recipient_name, recipient_email, message = request[
-                0]
-            draft = EmailMessage()
-            draft["Subject"] = "A message to {} from {}".format(
-                recipient_name.title(), sender_name.title())
-            draft["From"] = username
-            draft["To"] = recipient_email
-            draft.set_content(message)
-
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-                smtp.login(username, password)
-                smtp.send_message(draft)
-                print("Your draft is on its way to {}!".format(
-                    self.recipient_name))
-            x.execute("DELETE FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient_name", {
-                      "name": name, "recipient_name": recipient})
-            connect.commit()
-            print("\nYour message to {} has been sent!\n".format(recipient_name.title()))
-        else:
-            raise exception
-
-    def edit_message(self, name, recipient, new_message):
-        x.execute("SELECT * FROM customer_reqs WHERE customer_name LIKE :name AND recipient_name LIKE :recipient",
-                  {"name": name.title(), "recipient": recipient.title()})
-        if len(x.fetchall()) > 0:
-            x.execute("UPDATE customer_reqs SET message = :message WHERE customer_name LIKE :name AND recipient_name LIKE :recipient", {
-                      "message": new_message, "name": name.title(), "recipient": recipient.title()})
-            print("\nYour message to {} has successfully been updated!\n".format(
-                recipient.title()))
-        else:
-            raise exception
+            x.execute("SELECT * FROM email WHERE sender_name LIKE :sender_name;",
+                      {"sender_name": sender_name})
+            for entry in x.fetchall():
+                sender_name, recipient_name, recipient_email, subject, message, attachment, date_sent = entry
+                print("\nSENT TO: {} ({})\nSUBJECT: {}\nMESSAGE: {}\nATTACHMENT: {}\nDATE SENT: {}".format(
+                    recipient_name, recipient_email, subject, message, attachment, date_sent))
 
 
+a = Email()
 while True:
-    start = input("Please enter the number that corresponds to the action you want to take:\n1. Submit a new draft request\n2. Send draft message to recipient\n3. View request\n4. Edit draft\nEnter the number here: ")
-    name = input("Please enter your name: ")
+    start = input("PLEASE ENTER THE NUMBER THAT CORRESPONDS TO THE ACTION YOU WISH TO TAKE:\n1. Send one email with no attachment\n2. Send one email with an attachment\n3. Send mass email with no attachment\n4. Send mass email with attachment\n5. Send email with multiple attachments\n6. Send mass email with multiple attachments\n7. View emails sent\nPLEASE ENTER THE NUMBER HERE: ")
     if start == "1":
-        recipient_name = input("Please enter the recipeint of this message: ")
-        recipient_email = input("Please enter the recipient's email: ")
-        message = input(
-            "Please enter the message you wish to send to {}: ".format(recipient_name))
-        user = Customer(name, recipient_name, recipient_email, message)
+        sender_name = input("Your name: ")
+        recipient_name = input("Recipient's name: ")
+        recipient_email = input("Rcipient's email: ")
+        subject = input("Email's subject: ")
+        email_message = input("Message: ")
+        a.send_email_none(sender_name, recipient_name,
+                          recipient_email, subject, email_message)
     elif start == "2":
-        recipient_name = input("Please enter the recipeint of this message: ")
-        try:
-            user.send_message(name, recipient_name)
-        except:
-            print("Sorry, this request is not in our database!\n")
+        sender_name = input("Your name: ")
+        recipient_name = input("Recipient's name: ")
+        recipient_email = input("Rcipient's email: ")
+        subject = input("Email's subject: ")
+        email_message = input("Message: ")
+        attachment_name = input("File name : ")
+        attachment_type = input("Is the file an image or a document: ")
+        a.send_email_attachment(sender_name, recipient_name, recipient_email,
+                                subject, email_message, attachment_name, attachment_type)
     elif start == "3":
-        try:
-            user.view_request(name)
-        except:
-            print("Sorry, this request is not in our database!\n")
+        sender_name = input("Your name: ")
+        subject = input("Email's subject: ")
+        email_message = input("Message: ")
+        status = True
+        while status == True:
+            recipient_name = input("Recipient's name: ")
+            recipient_email = input("Recipient's email: ")
+            a.send_email_none(sender_name, recipient_name,
+                              recipient_email, subject, email_message)
+            answer = input(
+                "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
+            if answer.strip() == "2":
+                status = False
     elif start == "4":
-        recipient_name = input("Please enter the recipeint of this message: ")
-        new_message = input("Please enter your new message here: ")
+        sender_name = input("Your name: ")
+        subject = input("Email's subject: ")
+        email_message = input("Message: ")
+        attachment_name = input("File name : ")
+        attachment_type = input("Is the file an image or a document: ")
+        status = True
+        while status == True:
+            recipient_name = input("Recipient's name: ")
+            recipient_email = input("Rcipient's email: ")
+            a.send_email_attachment(sender_name, recipient_name, recipient_email,
+                                    subject, email_message, attachment_name, attachment_type)
+            answer = input(
+                "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
+            print("\n")
+            if answer.strip() == "2":
+                status = False
+    elif start == "5":
+        sender_name = input("Your name: ")
+        recipient_name = input("Recipient's name: ")
+        recipient_email = input("Rcipient's email: ")
+        subject = input("Email's subject: ")
+        email_message = input("Message: ")
+        attachment_names = input("File names: ")
         try:
-            user.edit_message(name, recipient_name, new_message)
+            a.send_email_attachments(
+                sender_name, recipient_name, recipient_email, subject, email_message, attachment_names)
         except:
-            print("Sorry, this request is not in our database!\n")
-    elif start == "view":
-        x.execute("SELECT * FROM customer_reqs")
+            print("\nOne of the files you uploaded was invalid! Please try again.\n")
+    elif start == "6":
+        sender_name = input("Your name: ")
+        subject = input("Email's subject: ")
+        email_message = input("Message: ")
+        attachment_names = input("File names: ")
+        status = True
+        while status == True:
+            recipient_name = input("Recipient's name: ")
+            recipient_email = input("Rcipient's email: ")
+            try:
+                a.send_email_attachments(sender_name, recipient_name, recipient_email,
+                                         subject, email_message, attachment_names)
+            except:
+                print("\nOne of the files you uploaded was invalid! Please try again.\n")
+                break
+            else:
+                answer = input(
+                    "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
+                print("\n")
+            if answer.strip() == "2":
+                status = False
+    elif start == "7":
+        sender_name = input("Your name: ")
+        a.view_emails(sender_name.title().strip())
+    elif start == "view" or start == "View":
+        x.execute("SELECT * FROM email;")
         for entry in x.fetchall():
-            print(entry)
+            sender_name, recipient_name, recipient_email, subject, message, attachment, date_sent = entry
+            print("\nSENT TO: {} ({})\nSUBJECT: {}\nMESSAGE: {}\nATTACHMENT: {}\nDATE SENT: {}".format(
+                recipient_name, recipient_email, subject, message, attachment, date_sent))
     else:
-        raise exception("Sorry, this was an invalid input. Please try again.")
+        print("This was an invalid input! Please try again.\n")
+        break
