@@ -36,9 +36,9 @@ class Email:
             smtp.send_message(message)
         print("\nYour message to {} has been sent!\n".format(recipient_name))
 
-    def send_email_attachment(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name, attachment_type):
+    def send_email_attachment(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name):
         x.execute(
-            "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": attachment_name + str((" " + attachment_type)), "date_sent": datetime.now()})
+            "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": attachment_name, "date_sent": datetime.now()})
         connect.commit()
         message = EmailMessage()
         message["From"] = username
@@ -95,7 +95,7 @@ class Email:
                 file_path = os.path.join(path_docs, key)
             elif os.path.exists(os.path.join(path_gifs, key)):
                 file_path = os.path.join(path_gifs, key)
-            if file_path is not "":
+            if file_path != "":
                 with open(file_path, "rb") as file:
                     file_data = file.read()
                     try:
@@ -136,8 +136,8 @@ while True:
         recipient_email = input("Rcipient's email: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
-        a.send_email_none(sender_name, recipient_name,
-                          recipient_email, subject, email_message)
+        a.send_email_none(sender_name.title().strip(), recipient_name.title().strip(),
+                          recipient_email.strip(), subject.strip(), email_message)
     elif start == "2":
         sender_name = input("Your name: ")
         recipient_name = input("Recipient's name: ")
@@ -145,9 +145,8 @@ while True:
         subject = input("Email's subject: ")
         email_message = input("Message: ")
         attachment_name = input("File name : ")
-        attachment_type = input("Is the file an image or a document: ")
-        a.send_email_attachment(sender_name, recipient_name, recipient_email,
-                                subject, email_message, attachment_name, attachment_type)
+        a.send_email_attachment(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
+                                subject.strip(), email_message, attachment_name.strip())
     elif start == "3":
         sender_name = input("Your name: ")
         subject = input("Email's subject: ")
@@ -156,8 +155,8 @@ while True:
         while status == True:
             recipient_name = input("Recipient's name: ")
             recipient_email = input("Recipient's email: ")
-            a.send_email_none(sender_name, recipient_name,
-                              recipient_email, subject, email_message)
+            a.send_email_none(sender_name.title().strip(), recipient_name.title().strip(),
+                              recipient_email.strip(), subject.strip(), email_message)
             answer = input(
                 "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
             if answer.strip() == "2":
@@ -172,8 +171,8 @@ while True:
         while status == True:
             recipient_name = input("Recipient's name: ")
             recipient_email = input("Rcipient's email: ")
-            a.send_email_attachment(sender_name, recipient_name, recipient_email,
-                                    subject, email_message, attachment_name, attachment_type)
+            a.send_email_attachment(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
+                                    subject.strip(), email_message, attachment_name.strip())
             answer = input(
                 "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
             print("\n")
@@ -188,7 +187,7 @@ while True:
         attachment_names = input("File names: ")
         try:
             a.send_email_attachments(
-                sender_name, recipient_name, recipient_email, subject, email_message, attachment_names)
+                sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(), subject.strip(), email_message.strip(), attachment_names.strip())
         except:
             print("\nOne of the files you uploaded was invalid! Please try again.\n")
     elif start == "6":
@@ -201,8 +200,8 @@ while True:
             recipient_name = input("Recipient's name: ")
             recipient_email = input("Rcipient's email: ")
             try:
-                a.send_email_attachments(sender_name, recipient_name, recipient_email,
-                                         subject, email_message, attachment_names)
+                a.send_email_attachments(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
+                                         subject.strip(), email_message.strip(), attachment_names.strip())
             except:
                 print("\nOne of the files you uploaded was invalid! Please try again.\n")
                 break
