@@ -46,6 +46,7 @@ class Email:
         message["Subject"] = subject
         message.set_content(email_message)
         path_desktop = "/Users/olivia/Desktop"
+        path_downloads = "/Users/olivia/Downloads"
         path_docs = "/Users/olivia/Documents"
         path_gifs = "/Users/olivia/Documents/GIFs"
         if os.path.exists(os.path.join(path_desktop, attachment_name)):
@@ -53,7 +54,9 @@ class Email:
         elif os.path.exists(os.path.join(path_docs, attachment_name)):
             file_path = os.path.join(path_docs, attachment_name)
         elif os.path.exists(os.path.join(path_gifs, attachment_name)):
-            file_path = os.path.join(path_gifst, attachment_name)
+            file_path = os.path.join(path_gifs, attachment_name)
+        elif os.path.exists(os.path.join(path_downloads, attachment_name)):
+            file_path = os.path.join(path_downloads, attachment_name)
         with open(file_path, "rb") as file:
             file_data = file.read()
             try:
@@ -87,7 +90,7 @@ class Email:
         path_desktop = "/Users/olivia/Desktop"
         path_docs = "/Users/olivia/Documents"
         path_gifs = "/Users/olivia/Documents/GIFs"
-        file_path = ""
+        path_downloads = "/Users/olivia/Downloads"
         for key in attachment_names_list_final:
             if os.path.exists(os.path.join(path_desktop, key)):
                 file_path = os.path.join(path_desktop, key)
@@ -95,6 +98,8 @@ class Email:
                 file_path = os.path.join(path_docs, key)
             elif os.path.exists(os.path.join(path_gifs, key)):
                 file_path = os.path.join(path_gifs, key)
+            elif os.path.exists(os.path.join(path_downloads, key)):
+                file_path = os.path.join(path_downloads, key)
             if file_path != "":
                 with open(file_path, "rb") as file:
                     file_data = file.read()
@@ -128,10 +133,11 @@ class Email:
 
 
 a = Email()
+print("WELCOME!")
 while True:
-    start = input("PLEASE ENTER THE NUMBER THAT CORRESPONDS TO THE ACTION YOU WISH TO TAKE:\n1. Send one email with no attachment\n2. Send one email with an attachment\n3. Send mass email with no attachment\n4. Send mass email with attachment\n5. Send email with multiple attachments\n6. Send mass email with multiple attachments\n7. View emails sent\nPLEASE ENTER THE NUMBER HERE: ")
+    start = input("\nPLEASE ENTER THE NUMBER THAT CORRESPONDS TO THE ACTION YOU WISH TO TAKE:\n1. Send one email with no attachment\n2. Send one email with an attachment\n3. Send mass email with no attachment\n4. Send mass email with attachment\n5. Send email with multiple attachments\n6. Send mass email with multiple attachments\n7. View emails sent\nPLEASE ENTER THE NUMBER HERE: ")
     if start == "1":
-        sender_name = input("Your name: ")
+        sender_name = input("\nYour name: ")
         recipient_name = input("Recipient's name: ")
         recipient_email = input("Rcipient's email: ")
         subject = input("Email's subject: ")
@@ -139,7 +145,7 @@ while True:
         a.send_email_none(sender_name.title().strip(), recipient_name.title().strip(),
                           recipient_email.strip(), subject.strip(), email_message)
     elif start == "2":
-        sender_name = input("Your name: ")
+        sender_name = input("\nYour name: ")
         recipient_name = input("Recipient's name: ")
         recipient_email = input("Rcipient's email: ")
         subject = input("Email's subject: ")
@@ -166,16 +172,14 @@ while True:
         subject = input("Email's subject: ")
         email_message = input("Message: ")
         attachment_name = input("File name : ")
-        attachment_type = input("Is the file an image or a document: ")
         status = True
         while status == True:
             recipient_name = input("Recipient's name: ")
-            recipient_email = input("Rcipient's email: ")
+            recipient_email = input("Recipient's email: ")
             a.send_email_attachment(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
                                     subject.strip(), email_message, attachment_name.strip())
             answer = input(
                 "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
-            print("\n")
             if answer.strip() == "2":
                 status = False
     elif start == "5":
@@ -208,7 +212,6 @@ while True:
             else:
                 answer = input(
                     "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
-                print("\n")
             if answer.strip() == "2":
                 status = False
     elif start == "7":
@@ -220,6 +223,7 @@ while True:
             sender_name, recipient_name, recipient_email, subject, message, attachment, date_sent = entry
             print("\nSENT TO: {} ({})\nSUBJECT: {}\nMESSAGE: {}\nATTACHMENT: {}\nDATE SENT: {}".format(
                 recipient_name, recipient_email, subject, message, attachment, date_sent))
+        print("\n")
     else:
         print("This was an invalid input! Please try again.\n")
         break
