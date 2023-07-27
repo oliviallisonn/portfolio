@@ -22,13 +22,17 @@ password = os.environ.get("EMAIL_PASSWORD")
 
 
 class Email:
-    def send_email_none(self, sender_name, recipient_name, recipient_email, subject, email_message):
+    def send_email_none(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name=None, cc=None, bcc=None):
         x.execute(
             "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": "None", "date_sent": datetime.now()})
         connect.commit()
         message = EmailMessage()
         message["From"] = username
         message["To"] = recipient_email
+        if cc != None:
+            message["CC"] = cc
+        if bcc != None:
+            message["BCC"] = bcc
         message["Subject"] = subject
         message.set_content(email_message)
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
@@ -36,55 +40,25 @@ class Email:
             smtp.send_message(message)
         print("\nYour message to {} has been sent!\n".format(recipient_name))
 
-    def send_email_attachment(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name):
-        x.execute(
-            "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": attachment_name, "date_sent": datetime.now()})
-        connect.commit()
-        message = EmailMessage()
-        message["From"] = username
-        message["To"] = recipient_email
-        message["Subject"] = subject
-        message.set_content(email_message)
-        path_desktop = "/Users/olivia/Desktop"
-        path_downloads = "/Users/olivia/Downloads"
-        path_docs = "/Users/olivia/Documents"
-        path_gifs = "/Users/olivia/Documents/GIFs"
-        if os.path.exists(os.path.join(path_desktop, attachment_name)):
-            file_path = os.path.join(path_desktop, attachment_name)
-        elif os.path.exists(os.path.join(path_docs, attachment_name)):
-            file_path = os.path.join(path_docs, attachment_name)
-        elif os.path.exists(os.path.join(path_gifs, attachment_name)):
-            file_path = os.path.join(path_gifs, attachment_name)
-        elif os.path.exists(os.path.join(path_downloads, attachment_name)):
-            file_path = os.path.join(path_downloads, attachment_name)
-        with open(file_path, "rb") as file:
-            file_data = file.read()
-            try:
-                file_type = imghdr.what(file.name)
-                file_name = attachment_name
-                message.add_attachment(file_data, maintype="image",
-                                       subtype=file_type, filename=file_name)
-            except:
-                file_name = attachment_name
-                message.add_attachment(
-                    file_data, maintype="application", subtype="octet-stream", filename=file_name)
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(username, password)
-            smtp.send_message(message)
-        print("\nYour message and attachment have been sent to {}!\n".format(
-            recipient_name))
-
-    def send_email_attachments(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_names):
+    def send_email_attachments(self, sender_name, recipient_name, recipient_email, subject, email_message, attachment_names, cc=None, bcc=None):
         x.execute(
             "INSERT INTO email VALUES(:sender_name,:recipient_name,:recipient_email,:subject,:message,:attachment,:date_sent);", {"sender_name": sender_name, "recipient_name": recipient_name, "recipient_email": recipient_email, "subject": subject, "message": email_message, "attachment": attachment_names, "date_sent": datetime.now()})
         connect.commit()
-        attachment_names_list = attachment_names.split(",")
-        attachment_names_list_final = []
-        for name in attachment_names_list:
-            attachment_names_list_final.append(name.strip())
+        if "," in attachment_names:
+            attachment_names_list = attachment_names.split(",")
+            attachment_names_list_final = []
+            for name in attachment_names_list:
+                attachment_names_list_final.append(name.strip())
+        else:
+            attachment_names_list_final = []
+            attachment_names_list_final.append(attachment_names.strip())
         message = EmailMessage()
         message["From"] = username
         message["To"] = recipient_email
+        if cc != None:
+            message["CC"] = cc
+        if bcc != None:
+            message["BCC"] = bcc
         message["Subject"] = subject
         message.set_content(email_message)
         path_desktop = "/Users/olivia/Desktop"
@@ -100,20 +74,17 @@ class Email:
                 file_path = os.path.join(path_gifs, key)
             elif os.path.exists(os.path.join(path_downloads, key)):
                 file_path = os.path.join(path_downloads, key)
-            if file_path != "":
-                with open(file_path, "rb") as file:
-                    file_data = file.read()
-                    try:
-                        file_type = imghdr.what(file.name)
-                        file_name = key
-                        message.add_attachment(
-                            file_data, maintype="image", subtype="pic_type", filename=file_name)
-                    except:
-                        file_name = key
-                        message.add_attachment(
-                            file_data, maintype="application", subtype="octet-stream", filename=file_name)
-            else:
-                raise exception
+            with open(file_path, "rb") as file:
+                file_data = file.read()
+                try:
+                    file_type = imghdr.what(file.name)
+                    file_name = key
+                    message.add_attachment(
+                        file_data, maintype="image", subtype="pic_type", filename=file_name)
+                except:
+                    file_name = key
+                    message.add_attachment(
+                        file_data, maintype="application", subtype="octet-stream", filename=file_name)
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(username, password)
             smtp.send_message(message)
@@ -132,89 +103,132 @@ class Email:
                     recipient_name, recipient_email, subject, message, attachment, date_sent))
 
 
+def single_send(function, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name=None):
+    if " cc " in recipient_email and " bcc " not in recipient_email:
+        email_list = recipient_email.split(" cc ")
+        email_final = []
+        for email in email_list:
+            email_final.append(email.strip())
+        email_to = email_final[0]
+        email_cc = email_final[-1]
+        function(sender_name.title().strip(), recipient_name.title().strip(),
+                 email_to.strip(), subject.strip(), email_message, attachment_name, cc=email_cc)
+    elif " bcc " in recipient_email and " cc " not in recipient_email:
+        email_list = recipient_email.split(" bcc ")
+        email_final = []
+        for email in email_list:
+            email_final.append(email.strip())
+        email_to = email_final[0]
+        email_bcc = email_final[-1]
+        function(sender_name.title().strip(), recipient_name.title().strip(),
+                 email_to.strip(), subject.strip(), email_message, attachment_name, bcc=email_bcc)
+    elif " cc " in recipient_email and " bcc " in recipient_email:
+        email_list_cc = recipient_email.split(" cc ")
+        email_list_bcc = email_list_cc[1].split(" bcc ")
+        email_final = []
+        email_final.append(email_list_cc[0].strip())
+        for email in email_list_bcc:
+            email_final.append(email.strip())
+        email_to = email_final[0]
+        email_cc = email_final[1]
+        email_bcc = email_final[2]
+        function(sender_name.title().strip(), recipient_name.title().strip(),
+                 email_to.strip(), subject.strip(), email_message, attachment_name, cc=email_cc, bcc=email_bcc)
+    else:
+        function(sender_name.title().strip(), recipient_name.title().strip(),
+                 recipient_email.strip(), subject.strip(), email_message, attachment_name)
+
+
+def mass_send(function, sender_name, subject, email_message, attachment_name=None):
+    status = True
+    email_cc = None
+    email_bcc = None
+    while status == True:
+        recipient_name = input("Recipient's name: ")
+        recipient_email = input("Recipient's email: ")
+        if " cc " in recipient_email and " bcc " not in recipient_email:
+            email_list = recipient_email.split(" cc ")
+            email_final = []
+            for email in email_list:
+                email_final.append(email.strip())
+            email_to = email_final[0]
+            email_cc = email_final[-1]
+            function(sender_name.title().strip(), recipient_name.title().strip(),
+                     email_to.strip(), subject.strip(), email_message, attachment_name, cc=email_cc)
+        elif " bcc " in recipient_email and " cc " not in recipient_email:
+            email_list = recipient_email.split(" bcc ")
+            email_final = []
+            for email in email_list:
+                email_final.append(email.strip())
+            email_to = email_final[0]
+            email_bcc = email_final[-1]
+            function(sender_name.title().strip(), recipient_name.title().strip(),
+                     email_to.strip(), subject.strip(), email_message, attachment_name, bcc=email_bcc)
+        elif " cc " in recipient_email and " bcc " in recipient_email:
+            email_list_cc = recipient_email.split(" cc ")
+            email_list_bcc = email_list_cc[1].split(" bcc ")
+            email_final = []
+            email_final.append(email_list_cc[0].strip())
+            for email in email_list_bcc:
+                email_final.append(email.strip())
+            email_to = email_final[0]
+            email_cc = email_final[1]
+            email_bcc = email_final[2]
+            function(sender_name.title().strip(), recipient_name.title().strip(),
+                     email_to.strip(), subject.strip(), email_message, attachment_name, cc=email_cc, bcc=email_bcc)
+        else:
+            if email_cc != None and email_bcc == None:
+                function(sender_name.title().strip(), recipient_name.title().strip(),
+                         recipient_email.strip(), subject.strip(), email_message, attachment_name, cc=email_cc)
+            elif email_cc == None and email_bcc != None:
+                function(sender_name.title().strip(), recipient_name.title().strip(),
+                         recipient_email.strip(), subject.strip(), email_message, attachment_name, bcc=email_bcc)
+            elif email_cc != None and email_bcc != None:
+                function(sender_name.title().strip(), recipient_name.title().strip(),
+                         recipient_email.strip(), subject.strip(), email_message, attachment_name, cc=email_cc, bcc=email_bcc)
+            else:
+                function(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
+                         subject.strip(), email_message, attachment_name)
+        answer = input(
+            "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
+        if answer.strip() == "2":
+            status = False
+
+
 a = Email()
 print("WELCOME!")
 while True:
-    start = input("\nPLEASE ENTER THE NUMBER THAT CORRESPONDS TO THE ACTION YOU WISH TO TAKE:\n1. Send one email with no attachment\n2. Send one email with an attachment\n3. Send mass email with no attachment\n4. Send mass email with attachment\n5. Send email with multiple attachments\n6. Send mass email with multiple attachments\n7. View emails sent\nPLEASE ENTER THE NUMBER HERE: ")
+    start = input("\nPLEASE ENTER THE NUMBER THAT CORRESPONDS TO THE ACTION YOU WISH TO TAKE:\n1. Send one email with no attachment\n2. Send one email with attachments\n3. Send mass email with no attachment\n4. Send mass email with attachments\n5. View emails sent\nPLEASE ENTER THE NUMBER HERE: ")
     if start == "1":
-        sender_name = input("\nYour name: ")
+        sender_name = input("Your name: ")
         recipient_name = input("Recipient's name: ")
         recipient_email = input("Rcipient's email: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
-        a.send_email_none(sender_name.title().strip(), recipient_name.title().strip(),
-                          recipient_email.strip(), subject.strip(), email_message)
+        single_send(a.send_email_none, sender_name, recipient_name,
+                    recipient_email, subject, email_message)
     elif start == "2":
-        sender_name = input("\nYour name: ")
+        sender_name = input("Your name: ")
         recipient_name = input("Recipient's name: ")
         recipient_email = input("Rcipient's email: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
-        attachment_name = input("File name : ")
-        a.send_email_attachment(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
-                                subject.strip(), email_message, attachment_name.strip())
+        attachment_names = input("File names: ")
+        single_send(a.send_email_attachments,
+                    sender_name, recipient_name, recipient_email, subject, email_message, attachment_name=attachment_names.strip())
     elif start == "3":
         sender_name = input("Your name: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
-        status = True
-        while status == True:
-            recipient_name = input("Recipient's name: ")
-            recipient_email = input("Recipient's email: ")
-            a.send_email_none(sender_name.title().strip(), recipient_name.title().strip(),
-                              recipient_email.strip(), subject.strip(), email_message)
-            answer = input(
-                "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
-            if answer.strip() == "2":
-                status = False
+        mass_send(a.send_email_none, sender_name, subject, email_message)
     elif start == "4":
         sender_name = input("Your name: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
-        attachment_name = input("File name : ")
-        status = True
-        while status == True:
-            recipient_name = input("Recipient's name: ")
-            recipient_email = input("Recipient's email: ")
-            a.send_email_attachment(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
-                                    subject.strip(), email_message, attachment_name.strip())
-            answer = input(
-                "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
-            if answer.strip() == "2":
-                status = False
+        attachment_names = input("File name : ")
+        mass_send(a.send_email_attachments, sender_name, subject,
+                  email_message, attachment_name=attachment_names.strip())
     elif start == "5":
-        sender_name = input("Your name: ")
-        recipient_name = input("Recipient's name: ")
-        recipient_email = input("Rcipient's email: ")
-        subject = input("Email's subject: ")
-        email_message = input("Message: ")
-        attachment_names = input("File names: ")
-        try:
-            a.send_email_attachments(
-                sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(), subject.strip(), email_message.strip(), attachment_names.strip())
-        except:
-            print("\nOne of the files you uploaded was invalid! Please try again.\n")
-    elif start == "6":
-        sender_name = input("Your name: ")
-        subject = input("Email's subject: ")
-        email_message = input("Message: ")
-        attachment_names = input("File names: ")
-        status = True
-        while status == True:
-            recipient_name = input("Recipient's name: ")
-            recipient_email = input("Rcipient's email: ")
-            try:
-                a.send_email_attachments(sender_name.title().strip(), recipient_name.title().strip(), recipient_email.strip(),
-                                         subject.strip(), email_message.strip(), attachment_names.strip())
-            except:
-                print("\nOne of the files you uploaded was invalid! Please try again.\n")
-                break
-            else:
-                answer = input(
-                    "Do you want to continue?\n1.Yes\n2. No\nEnter here: ")
-            if answer.strip() == "2":
-                status = False
-    elif start == "7":
         sender_name = input("Your name: ")
         a.view_emails(sender_name.title().strip())
     elif start == "view" or start == "View":
