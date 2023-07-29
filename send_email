@@ -65,6 +65,8 @@ class Email:
         path_docs = "/Users/olivia/Documents"
         path_gifs = "/Users/olivia/Documents/GIFs"
         path_downloads = "/Users/olivia/Downloads"
+        path_books = "/Users/olivia/Documents/Books"
+        file_path = None
         for key in attachment_names_list_final:
             if os.path.exists(os.path.join(path_desktop, key)):
                 file_path = os.path.join(path_desktop, key)
@@ -74,6 +76,9 @@ class Email:
                 file_path = os.path.join(path_gifs, key)
             elif os.path.exists(os.path.join(path_downloads, key)):
                 file_path = os.path.join(path_downloads, key)
+            elif os.path.exists(os.path.join(path_books, key)):
+                file_path = os.path.join(path_books, key)
+        if file_path != None:
             with open(file_path, "rb") as file:
                 file_data = file.read()
                 try:
@@ -85,11 +90,11 @@ class Email:
                     file_name = key
                     message.add_attachment(
                         file_data, maintype="application", subtype="octet-stream", filename=file_name)
+        else:
+            raise Exception
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(username, password)
             smtp.send_message(message)
-            print("\nYour message and attachments have been sent to {}!\n".format(
-                recipient_name))
 
     def view_emails(self, sender_name):
         x.execute("SELECT * FROM email WHERE sender_name LIKE :sender_name;",
@@ -101,6 +106,8 @@ class Email:
                 sender_name, recipient_name, recipient_email, subject, message, attachment, date_sent = entry
                 print("\nSENT TO: {} ({})\nSUBJECT: {}\nMESSAGE: {}\nATTACHMENT: {}\nDATE SENT: {}".format(
                     recipient_name, recipient_email, subject, message, attachment, date_sent))
+        else:
+            raise Exception
 
 
 def single_send(function, sender_name, recipient_name, recipient_email, subject, email_message, attachment_name=None):
@@ -202,7 +209,7 @@ while True:
     if start == "1":
         sender_name = input("Your name: ")
         recipient_name = input("Recipient's name: ")
-        recipient_email = input("Rcipient's email: ")
+        recipient_email = input("Recipient's email: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
         single_send(a.send_email_none, sender_name, recipient_name,
@@ -210,12 +217,19 @@ while True:
     elif start == "2":
         sender_name = input("Your name: ")
         recipient_name = input("Recipient's name: ")
-        recipient_email = input("Rcipient's email: ")
+        recipient_email = input("Recipient's email: ")
         subject = input("Email's subject: ")
         email_message = input("Message: ")
         attachment_names = input("File names: ")
-        single_send(a.send_email_attachments,
-                    sender_name, recipient_name, recipient_email, subject, email_message, attachment_name=attachment_names.strip())
+        try:
+            single_send(a.send_email_attachments,
+                        sender_name, recipient_name, recipient_email, subject, email_message, attachment_name=attachment_names.strip())
+        except:
+            print(
+                "\nThere may be an error with the attachment. Please check and try again!")
+        else:
+            print("\nYour message and attachments have been sent to {}!".format(
+                recipient_name))
     elif start == "3":
         sender_name = input("Your name: ")
         subject = input("Email's subject: ")
@@ -226,18 +240,27 @@ while True:
         subject = input("Email's subject: ")
         email_message = input("Message: ")
         attachment_names = input("File name : ")
-        mass_send(a.send_email_attachments, sender_name, subject,
-                  email_message, attachment_name=attachment_names.strip())
+        try:
+            mass_send(a.send_email_attachments, sender_name, subject,
+                      email_message, attachment_name=attachment_names.strip())
+        except:
+            print(
+                "\nThere may be an error with the attachment. Please check and try again!")
+        else:
+            print("\nYour message and attachments have been sent to {}!".format(
+                recipient_name))
     elif start == "5":
         sender_name = input("Your name: ")
-        a.view_emails(sender_name.title().strip())
+        try:
+            a.view_emails(sender_name.title().strip())
+        except:
+            print("\nYou haven't made any requests!")
     elif start == "view" or start == "View":
         x.execute("SELECT * FROM email;")
         for entry in x.fetchall():
             sender_name, recipient_name, recipient_email, subject, message, attachment, date_sent = entry
             print("\nSENT TO: {} ({})\nSUBJECT: {}\nMESSAGE: {}\nATTACHMENT: {}\nDATE SENT: {}".format(
                 recipient_name, recipient_email, subject, message, attachment, date_sent))
-        print("\n")
     else:
-        print("This was an invalid input! Please try again.\n")
+        print("\nThis was an invalid input! Please try again.")
         break
